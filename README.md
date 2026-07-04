@@ -54,6 +54,8 @@ normally need to set; the rest have sensible defaults.
 | Variable                    | Used by      | Default                             | Purpose                                 |
 | --------------------------- | ------------ | ----------------------------------- | --------------------------------------- |
 | `MINIMAX_API_KEY`           | `ai-commit`  | —                                   | MiniMax API key (required)              |
+| `ANTHROPIC_API_KEY`         | `claude-sandbox` | —                               | Claude API key (or use the token below) |
+| `CLAUDE_CODE_OAUTH_TOKEN`   | `claude-sandbox` | —                               | Long-lived Claude token (`claude setup-token`) |
 | `MINIMAX_MODEL`             | `ai-commit`  | `MiniMax-M2.7`                      | Model used to generate messages         |
 | `MINIMAX_API_BASE`          | `ai-commit`  | `https://api.minimax.io/v1`         | API base URL                            |
 | `MINIMAX_TOKEN_BUDGET`      | `ai-commit`  | `100000`                            | Max diff tokens sent to the model       |
@@ -66,14 +68,25 @@ normally need to set; the rest have sensible defaults.
 | `CLONES_DIR`                | `temp-clone` | `~/.kitbag/temp-clone/clones`  | Where temp clones are placed            |
 | `LOGS_DIR`                  | `temp-clone` | `~/.kitbag/temp-clone/logs`    | Cleanup log location                    |
 | `LAUNCH_AGENTS_DIR`         | `temp-clone` | `~/.kitbag/temp-clone/launch-agents` | Where cleanup plists are written  |
+| `SANDBOX_ALLOWED_DOMAINS`   | `claude-sandbox` | Anthropic + git/package hosts   | Egress allowlist (comma-separated)      |
+| `SANDBOX_FIREWALL`          | `claude-sandbox` | `true`                          | Restrict container egress to the allowlist |
+| `SANDBOX_MODEL`             | `claude-sandbox` | — (Claude's default)            | Default Claude model (alias or full id), overridable with `--model` |
+| `SANDBOX_OUTPUT_FORMAT`     | `claude-sandbox` | `text`                          | Headless format: text / json / stream-json |
+| `SANDBOX_SESSIONS_DIR`      | `claude-sandbox` | `~/.kitbag/claude-sandbox/sessions` | Where per-session Claude history is kept |
 | `KITBAG_HOME`          | all          | `~/.kitbag`                    | Root for all app data (affects the above) |
+
+`claude-sandbox` needs a Claude credential — `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`
+(these are Claude Code's own env-var names). It's passed into the container so Claude can
+authenticate, and like every other setting it resolves from a real env var, then a cwd
+`.env`, then `~/.kitbag/.env` — so you can keep it in a `.env` instead of exporting it.
 
 ## Commands
 
-| Command      | Does                                                                     |
-| ------------ | ------------------------------------------------------------------------ |
-| `ai-commit`  | Generate an AI commit message for staged changes and create the commit   |
-| `temp-clone` | Clone a GitHub repo into a temp dir, open it in VS Code, auto-clean later |
+| Command          | Does                                                                     |
+| ---------------- | ------------------------------------------------------------------------ |
+| `ai-commit`      | Generate an AI commit message for staged changes and create the commit   |
+| `temp-clone`     | Clone a GitHub repo into a temp dir, open it in VS Code, auto-clean later |
+| `claude-sandbox` | Run Claude Code with full autonomy inside a network-restricted Docker box |
 
 ### `ai-commit` — AI commit messages
 
@@ -95,3 +108,75 @@ via macOS launchd. Requires the `gh` CLI (authenticated) and, for `--open`, the 
 uv run kitbag temp-clone https://github.com/org/repo
 uv run kitbag temp-clone https://github.com/org/repo --no-open --cleanup-hours 4
 ```
+
+### `claude-sandbox` — autonomous Claude Code in a locked-down container
+
+Runs [Claude Code](https://claude.com/claude-code) inside a Docker container so it can
+work with full autonomy (`--dangerously-skip-permissions`) while staying fenced off from
+your host and the wider network. Requires Docker running and `ANTHROPIC_API_KEY` (or a
+`CLAUDE_CODE_OAUTH_TOKEN` from `claude setup-token`) in your environment.
+
+```sh
+# Interactive session on the repo you're standing in (edits persist for review):
+uv run kitbag claude-sandbox
+
+# Headless one-shot on a freshly cloned repo (ephemeral — nothing on your host is touched):
+uv run kitbag claude-sandbox https://github.com/org/repo -p "Fix the failing tests"
+
+# Headless, but watch a live activity log of tool calls + output as Claude works:
+uv run kitbag claude-sandbox -p "Fix the failing tests" --stream
+
+# Name the session, and get pinged when a headless run finishes:
+uv run kitbag claude-sandbox -n refactor -p "Split the god object" --notify
+
+# From another terminal, open a shell inside the running "refactor" sandbox:
+uv run kitbag claude-sandbox --attach refactor
+
+# Allow an extra domain through the egress firewall:
+uv run kitbag claude-sandbox -p "Update deps" --allow-domain deb.debian.org
+```
+
+**Input** — pass a repo URL to clone it *inside* the container (ephemeral), or omit it to
+bind-mount the current git repo read-write (uid-matched, so Claude's edits land on your
+host for you to review and commit). **Run mode** — pass `--prompt/-p` for a headless
+one-shot, or omit it for an interactive session.
+
+**Seeing what Claude is doing:** an interactive session is fully live (the normal Claude
+Code TUI). A headless run is quiet by default — it prints only the final result — which
+suits scripting/CI. Add `--stream` to a headless run for a live, human-readable activity
+log (each tool call, its result, and Claude's text as it goes, then a turns/time/cost
+summary at the end).
+
+**Sessions, history, and control:**
+
+- Each run has a **name** (`--name/-n`, or an auto-generated `sbx-…`). Its Claude session
+  history is persisted on the host under `~/.kitbag/claude-sandbox/sessions/<name>/`, so
+  transcripts survive the throwaway container — and re-running the same name resumes that
+  history.
+- While a sandbox is running, `--attach <name>` opens a second shell **inside** it (subject
+  to the same egress firewall and push blocks). Interactive runs print the exact attach
+  command to use.
+- `--notify` rings the terminal bell and (on macOS) shows a desktop notification when a
+  headless run finishes.
+- The run is foreground: watch it live, and **Ctrl-C** stops it (the `--rm` container is
+  cleaned up).
+
+**How it's fenced in** (defense in depth):
+
+- Claude runs as a **non-root user**, so a bypassed session can't touch your host beyond
+  the mounted workspace.
+- An **egress firewall** (iptables) drops all outbound traffic except an allowlist of
+  domains (Anthropic API + common git/package hosts). Extend it with `--allow-domain` or
+  `SANDBOX_ALLOWED_DOMAINS`; disable with `--no-firewall`.
+- **Pushing to remotes is blocked** three independent ways — a root-owned `settings.json`
+  `deny` rule, a root-owned PreToolUse hook, and a root-owned git `pre-push` hook, none of
+  which the `claude` user can edit — and no git push credentials are injected.
+
+The container image is built once (cached, keyed to a content hash; `--rebuild` forces a
+rebuild). The generated Docker build context lives under `~/.kitbag/claude-sandbox/`.
+
+> **Caveats.** The egress allowlist is resolved to IPs at container start, so hosts behind
+> rotating CDN IPs may occasionally need a re-run, and it isn't TLS-inspected — a broad
+> allowlisted domain can still be a data path. When you bind-mount the current repo, Claude
+> can freely modify anything in it (that's the point); the sandbox protects your host
+> *outside* the mount and your network, not the mounted files themselves.
