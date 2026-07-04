@@ -1,0 +1,83 @@
+[project]
+name = "dev-toolbox"
+version = "0.1.0"
+description = "A collection of tools for developers"
+readme = "README.md"
+requires-python = "~=3.12"
+dependencies = [
+    # CLI dependencies
+    "typer==0.26.8",
+    "rich==15.0.0",
+    # Other dependencies
+    "pydantic-settings==2.14.2",
+    "httpx==0.28.1",
+    "sqlalchemy==2.0.51",
+]
+
+[dependency-groups]
+dev = [
+    {include-group = "test"},
+    {include-group = "lint"},
+]
+test = [
+    "pytest==9.1.1",
+    "pytest-xdist==3.8.0",
+    "pytest-cov==7.1.0",
+]
+lint = [
+    "ruff==0.15.11",
+    "ty==0.0.32",
+    "vulture==2.14",
+]
+
+[build-system]
+requires = ["uv_build==0.11.26"]
+build-backend = "uv_build"
+
+[tool.uv]
+default-groups = ["dev"]
+
+[project.scripts]
+dev-toolbox = "dev_toolbox.main:app"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+norecursedirs = [".venv", "__pycache__", ".git"]
+addopts = [
+  "--tb=short",
+  "-ra",
+  "--import-mode=importlib",
+]
+markers = [
+  "unit: isolated tests with all external dependencies stubbed",
+  "integration: service-level tests with real collaborators and real files",
+  "e2e: end-to-end tests requiring a running Docker Compose stack",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "W",   # pycodestyle warnings
+    "I",   # import sorting
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "RUF", # Ruff-specific rules
+]
+
+[tool.vulture]
+min_confidence = 80
+exclude = [".venv/"]
+ignore_names = ["file_secret_settings"]
+
+[tool.ty]
+
+[tool.ty.src]
+exclude = [".venv/**"]
