@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-04
+
 ### Added
 - `claude-sandbox` command: run Claude Code with full autonomy inside a network-restricted
   Docker container. Clones a repo URL (ephemeral) or bind-mounts the current repo; runs
@@ -28,5 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ai-commit` command: generate an AI commit message for staged changes and create the commit.
 - `temp-clone` command: clone a GitHub repo into a temp directory and optionally open it in VS Code.
 
-[Unreleased]: https://github.com/l0kifs/kitbag/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/l0kifs/kitbag/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/l0kifs/kitbag/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/l0kifs/kitbag/releases/tag/v0.1.0
