@@ -3,7 +3,7 @@ name = "kitbag"
 version = "0.1.0"
 description = "A collection of tools for developers"
 readme = "README.md"
-requires-python = "~=3.12"
+requires-python = "~=3.12.0"
 dependencies = [
     # CLI dependencies
     "typer==0.26.8",
@@ -71,6 +71,11 @@ select = [
     "UP",  # pyupgrade
     "RUF", # Ruff-specific rules
 ]
+
+[tool.ruff.lint.flake8-bugbear]
+# Typer builds parameter metadata via these calls in argument defaults — the intended,
+# documented pattern — so B008 shouldn't flag them.
+extend-immutable-calls = ["typer.Option", "typer.Argument"]
 
 [tool.vulture]
 min_confidence = 80

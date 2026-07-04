@@ -34,6 +34,7 @@ USER_CONFIG_ENV = DATA_DIR / ".env"
 
 # Per-command data roots. Each command keeps its files under its own subdirectory.
 TEMP_CLONE_DIR = DATA_DIR / "temp-clone"
+CLAUDE_SANDBOX_DIR = DATA_DIR / "claude-sandbox"
 
 
 class Settings(BaseSettings):
@@ -69,6 +70,26 @@ class Settings(BaseSettings):
     clones_dir: Path = TEMP_CLONE_DIR / "clones"
     logs_dir: Path = TEMP_CLONE_DIR / "logs"
     launch_agents_dir: Path = TEMP_CLONE_DIR / "launch-agents"
+
+    # ── claude-sandbox — dockerized, egress-restricted Claude Code ─────────────
+    # Claude Code's own credentials, passed into the container so Claude can authenticate.
+    # These field names map to Claude's env vars (ANTHROPIC_API_KEY / CLAUDE_CODE_OAUTH_TOKEN),
+    # so a real env var wins, then a cwd .env, then ~/.kitbag/.env. Set whichever you use.
+    anthropic_api_key: str = ""
+    claude_code_oauth_token: str = ""
+    # Domains the container may reach when the egress firewall is on. Everything else is
+    # dropped. Kept deliberately tight: Anthropic API + the git/package hosts a coding
+    # agent normally needs. Comma-separated; extend via env or the --allow-domain flag.
+    sandbox_allowed_domains: str = (
+        "api.anthropic.com,claude.ai,statsig.anthropic.com,sentry.io,"
+        "github.com,api.github.com,codeload.github.com,objects.githubusercontent.com,"
+        "raw.githubusercontent.com,registry.npmjs.org,pypi.org,files.pythonhosted.org"
+    )
+    sandbox_firewall: bool = True                # restrict container egress to the allowlist
+    sandbox_model: str = ""                       # Claude model (alias or full id); "" = Claude's default
+    sandbox_output_format: str = "text"          # headless --output-format: text | json | stream-json
+    sandbox_context_dir: Path = CLAUDE_SANDBOX_DIR / "context"    # generated docker build context
+    sandbox_sessions_dir: Path = CLAUDE_SANDBOX_DIR / "sessions"  # persisted Claude history, per session
 
 
 @lru_cache
