@@ -22,8 +22,8 @@ import typer
 from rich.panel import Panel
 from rich.prompt import Prompt
 
-from dev_toolbox.config import get_settings
-from dev_toolbox.console import console
+from kitbag.config import get_settings
+from kitbag.console import console
 
 try:
     # Rich's Prompt/Console.input() only get arrow-key/backspace line editing

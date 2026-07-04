@@ -1,4 +1,4 @@
-"""dev-toolbox — a single CLI wiring together developer utilities.
+"""kitbag — a single CLI wiring together developer utilities.
 
 Subcommands:
   ai-commit    Generate an AI Conventional Commits message for staged changes (MiniMax).
@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import typer
 
-from dev_toolbox.commands.ai_commit import ai_commit_command
-from dev_toolbox.commands.temp_clone import temp_clone_command
+from kitbag.commands.ai_commit import ai_commit_command
+from kitbag.commands.temp_clone import temp_clone_command
 
 app = typer.Typer(
     help="A collection of tools for developers.",

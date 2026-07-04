@@ -21,8 +21,8 @@ from pathlib import Path
 import typer
 from rich.panel import Panel
 
-from dev_toolbox.config import get_settings
-from dev_toolbox.console import console
+from kitbag.config import get_settings
+from kitbag.console import console
 
 
 def print_gh_setup_help() -> None:

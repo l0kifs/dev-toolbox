@@ -2,14 +2,14 @@
 
 This tool is meant to be installed globally (e.g. `uv tool install`) and run from any
 directory, so configuration must not depend on the current working directory. All app
-data lives under a single root, `~/.dev_toolbox/` (override with `DEV_TOOLBOX_HOME`).
+data lives under a single root, `~/.kitbag/` (override with `KITBAG_HOME`).
 
 Settings are resolved in priority order:
 
   1. explicit constructor args,
   2. environment variables (e.g. `MINIMAX_API_KEY`),
   3. a per-project `.env` in the current directory (optional override),
-  4. the user config file `~/.dev_toolbox/.env` (the stable base).
+  4. the user config file `~/.kitbag/.env` (the stable base).
 
 Field names map to upper-case env vars. Both env files are optional; missing ones are
 ignored. Anchoring paths at DATA_DIR keeps everything pointing at the same place no
@@ -26,7 +26,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Single root for everything this tool writes: config, temp clones, logs, and
 # launch-agent plists. Overridable so tests and power users can relocate it.
-DATA_DIR = Path(os.environ.get("DEV_TOOLBOX_HOME") or (Path.home() / ".dev_toolbox"))
+DATA_DIR = Path(os.environ.get("KITBAG_HOME") or (Path.home() / ".kitbag"))
 
 # Stable, cwd-independent config file. A cwd `.env` still works and, being listed last,
 # wins over this file for per-project overrides.

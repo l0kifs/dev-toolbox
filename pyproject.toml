@@ -1,5 +1,5 @@
 [project]
-name = "dev-toolbox"
+name = "kitbag"
 version = "0.1.0"
 description = "A collection of tools for developers"
 readme = "README.md"
@@ -38,7 +38,7 @@ build-backend = "uv_build"
 default-groups = ["dev"]
 
 [project.scripts]
-dev-toolbox = "dev_toolbox.main:app"
+kitbag = "kitbag.main:app"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

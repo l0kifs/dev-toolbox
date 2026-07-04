@@ -1,32 +1,32 @@
-# dev-toolbox
+# kitbag
 
 A collection of developer utilities wired into a single CLI.
 
 ## Install
 
-Install it globally as a uv tool so `dev-toolbox` is on your PATH and works from any
+Install it globally as a uv tool so `kitbag` is on your PATH and works from any
 directory:
 
 ```sh
 uv tool install .            # from a clone, or `uv tool install <git-url>`
-dev-toolbox --help
+kitbag --help
 ```
 
 Or run it ad-hoc without installing:
 
 ```sh
-uvx --from . dev-toolbox --help
+uvx --from . kitbag --help
 ```
 
-For local development, `uv sync` + `uv run dev-toolbox ...` works too.
+For local development, `uv sync` + `uv run kitbag ...` works too.
 
 ## Data directory
 
-All app data lives under a single root, `~/.dev_toolbox/` (override with the
-`DEV_TOOLBOX_HOME` environment variable):
+All app data lives under a single root, `~/.kitbag/` (override with the
+`KITBAG_HOME` environment variable):
 
 ```
-~/.dev_toolbox/
+~/.kitbag/
 ├── .env                 # your config (see below)
 └── temp-clone/          # everything the `temp-clone` command writes
     ├── clones/          # throwaway clones
@@ -40,14 +40,14 @@ Because the tool is meant to run from anywhere, put your standing config in the
 user-level file (create the directory if needed):
 
 ```sh
-mkdir -p ~/.dev_toolbox
-cp .env.example ~/.dev_toolbox/.env   # then edit
+mkdir -p ~/.kitbag
+cp .env.example ~/.kitbag/.env   # then edit
 ```
 
 Resolution order (highest priority first): environment variables → a `.env` in the
-current directory (per-project override) → `~/.dev_toolbox/.env` (stable base).
+current directory (per-project override) → `~/.kitbag/.env` (stable base).
 
-Every default lives in `Settings` ([config.py](src/dev_toolbox/config.py)) and is
+Every default lives in `Settings` ([config.py](src/kitbag/config.py)) and is
 overridable by the matching upper-case env var. `MINIMAX_API_KEY` is the only one you
 normally need to set; the rest have sensible defaults.
 
@@ -63,10 +63,10 @@ normally need to set; the rest have sensible defaults.
 | `MINIMAX_HTTP_RETRIES`      | `ai-commit`  | `4`                                 | Retries on 429/5xx                      |
 | `CLONE_OPEN_VSCODE`         | `temp-clone` | `true`                              | Open the clone in VS Code by default    |
 | `CLONE_CLEANUP_HOURS`       | `temp-clone` | `12`                                | Auto-delete the temp clone after N hours |
-| `CLONES_DIR`                | `temp-clone` | `~/.dev_toolbox/temp-clone/clones`  | Where temp clones are placed            |
-| `LOGS_DIR`                  | `temp-clone` | `~/.dev_toolbox/temp-clone/logs`    | Cleanup log location                    |
-| `LAUNCH_AGENTS_DIR`         | `temp-clone` | `~/.dev_toolbox/temp-clone/launch-agents` | Where cleanup plists are written  |
-| `DEV_TOOLBOX_HOME`          | all          | `~/.dev_toolbox`                    | Root for all app data (affects the above) |
+| `CLONES_DIR`                | `temp-clone` | `~/.kitbag/temp-clone/clones`  | Where temp clones are placed            |
+| `LOGS_DIR`                  | `temp-clone` | `~/.kitbag/temp-clone/logs`    | Cleanup log location                    |
+| `LAUNCH_AGENTS_DIR`         | `temp-clone` | `~/.kitbag/temp-clone/launch-agents` | Where cleanup plists are written  |
+| `KITBAG_HOME`          | all          | `~/.kitbag`                    | Root for all app data (affects the above) |
 
 ## Commands
 
@@ -83,7 +83,7 @@ repo you're currently in.
 
 ```sh
 git add -p
-uv run dev-toolbox ai-commit
+uv run kitbag ai-commit
 ```
 
 ### `temp-clone` — throwaway GitHub clones
@@ -92,6 +92,6 @@ Clones a repo into a temp directory, opens it in VS Code, and schedules automati
 via macOS launchd. Requires the `gh` CLI (authenticated) and, for `--open`, the `code` CLI.
 
 ```sh
-uv run dev-toolbox temp-clone https://github.com/org/repo
-uv run dev-toolbox temp-clone https://github.com/org/repo --no-open --cleanup-hours 4
+uv run kitbag temp-clone https://github.com/org/repo
+uv run kitbag temp-clone https://github.com/org/repo --no-open --cleanup-hours 4
 ```
