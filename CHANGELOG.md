@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Secure credential storage. Credentials are kept in the OS keychain (macOS Keychain,
+  Windows Credential Manager, Linux Secret Service) via `keyring`, with an encrypted-file
+  fallback (`KITBAG_SECRETS_BACKEND=file`) for headless machines.
+  - `kitbag configure`: interactive wizard to store the credentials the built-in commands
+    need.
+  - `kitbag secrets set/get/list/delete`: manage individual secrets (known credentials and
+    arbitrary key/value secrets); values are entered via a hidden prompt and never echoed.
+  - `kitbag secrets import`: move known credentials out of `~/.kitbag/.env` into the secure
+    store, commenting out the originals (reversible).
+  - Stored credentials feed into settings automatically. Resolution order: real env var →
+    per-project `.env` → secure store → `~/.kitbag/.env`, so the store supersedes the
+    plaintext user file while env vars and project `.env` still override for CI.
+
 ## [0.2.0] - 2026-07-04
 
 ### Added

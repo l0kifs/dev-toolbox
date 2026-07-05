@@ -12,6 +12,9 @@ dependencies = [
     "pydantic-settings==2.14.2",
     "httpx==0.28.1",
     "sqlalchemy==2.0.51",
+    # Secure credential storage
+    "keyring==25.7.0",
+    "cryptography==49.0.0",
 ]
 
 [dependency-groups]

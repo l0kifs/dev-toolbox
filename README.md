@@ -51,8 +51,48 @@ All app data lives under a single root, `~/.kitbag/` (override with the
 
 ## Configuration
 
-Because the tool is meant to run from anywhere, put your standing config in the
-user-level file (create the directory if needed):
+### Credentials (secure storage)
+
+API keys and tokens should live in **secure storage**, not a plaintext file. kitbag keeps
+them in your OS keychain (macOS Keychain, Windows Credential Manager, Linux Secret
+Service) via [`keyring`], with an encrypted-file fallback for headless machines.
+
+Set them up interactively:
+
+```sh
+kitbag configure            # walk through every credential the commands need
+```
+
+Or manage them one at a time:
+
+```sh
+kitbag secrets set MINIMAX_API_KEY     # value is entered via a hidden prompt
+kitbag secrets list                    # names only, plus the active backend
+kitbag secrets get MINIMAX_API_KEY     # masked; add --reveal to print the value
+kitbag secrets delete MINIMAX_API_KEY
+```
+
+Already have keys in `~/.kitbag/.env`? Move them into the store (originals are commented
+out, so it's reversible):
+
+```sh
+kitbag secrets import
+```
+
+`secrets set` also accepts arbitrary names for your own use, not just the built-in
+credentials.
+
+**Backend selection** (`KITBAG_SECRETS_BACKEND`): `auto` (default — keychain if
+available, else file), `keyring`, or `file`. The `file` backend stores an encrypted blob
+at `~/.kitbag/secrets.enc` and needs a master passphrase, taken from
+`KITBAG_MASTER_PASSPHRASE` or an interactive prompt.
+
+[`keyring`]: https://pypi.org/project/keyring/
+
+### Non-secret config (`.env`)
+
+Non-secret defaults (models, timeouts, directories) still live in `.env` files. You can
+also keep credentials here if you prefer, but the secure store is recommended.
 
 ```sh
 mkdir -p ~/.kitbag
@@ -60,11 +100,13 @@ cp .env.example ~/.kitbag/.env   # then edit
 ```
 
 Resolution order (highest priority first): environment variables → a `.env` in the
-current directory (per-project override) → `~/.kitbag/.env` (stable base).
+current directory (per-project override) → the secure store → `~/.kitbag/.env` (stable
+base). So a real env var or a project `.env` still overrides a stored secret (handy for
+CI), while the store supersedes the plaintext user file.
 
 Every default lives in `Settings` ([config.py](src/kitbag/config.py)) and is
-overridable by the matching upper-case env var. `MINIMAX_API_KEY` is the only one you
-normally need to set; the rest have sensible defaults.
+overridable by the matching upper-case env var. `MINIMAX_API_KEY` is the only credential
+you normally need to set; the rest have sensible defaults.
 
 | Variable                    | Used by      | Default                             | Purpose                                 |
 | --------------------------- | ------------ | ----------------------------------- | --------------------------------------- |
@@ -88,17 +130,21 @@ normally need to set; the rest have sensible defaults.
 | `SANDBOX_MODEL`             | `claude-sandbox` | — (Claude's default)            | Default Claude model (alias or full id), overridable with `--model` |
 | `SANDBOX_OUTPUT_FORMAT`     | `claude-sandbox` | `text`                          | Headless format: text / json / stream-json |
 | `SANDBOX_SESSIONS_DIR`      | `claude-sandbox` | `~/.kitbag/claude-sandbox/sessions` | Where per-session Claude history is kept |
+| `KITBAG_SECRETS_BACKEND`    | all          | `auto`                              | Secret backend: `auto` / `keyring` / `file` |
+| `KITBAG_MASTER_PASSPHRASE`  | all          | —                                   | Passphrase for the `file` secrets backend |
 | `KITBAG_HOME`          | all          | `~/.kitbag`                    | Root for all app data (affects the above) |
 
 `claude-sandbox` needs a Claude credential — `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`
-(these are Claude Code's own env-var names). It's passed into the container so Claude can
-authenticate, and like every other setting it resolves from a real env var, then a cwd
-`.env`, then `~/.kitbag/.env` — so you can keep it in a `.env` instead of exporting it.
+(these are Claude Code's own env-var names). Store it with `kitbag configure` (or keep it
+in a `.env`); it's passed into the container so Claude can authenticate, resolving from a
+real env var, then a cwd `.env`, then the secure store, then `~/.kitbag/.env`.
 
 ## Commands
 
 | Command          | Does                                                                     |
 | ---------------- | ------------------------------------------------------------------------ |
+| `configure`      | Interactively store the credentials the commands need (secure storage)   |
+| `secrets`        | Manage credentials in local secure storage (set/get/list/delete/import)  |
 | `ai-commit`      | Generate an AI commit message for staged changes and create the commit   |
 | `temp-clone`     | Clone a GitHub repo into a temp dir, open it in VS Code, auto-clean later |
 | `claude-sandbox` | Run Claude Code with full autonomy inside a network-restricted Docker box |
