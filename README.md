@@ -8,17 +8,32 @@ Install it globally as a uv tool so `kitbag` is on your PATH and works from any
 directory:
 
 ```sh
-uv tool install .            # from a clone, or `uv tool install <git-url>`
+uv tool install kitbag
 kitbag --help
+```
+
+Upgrade to the latest release later with:
+
+```sh
+uv tool upgrade kitbag
 ```
 
 Or run it ad-hoc without installing:
 
 ```sh
-uvx --from . kitbag --help
+uvx kitbag --help
 ```
 
-For local development, `uv sync` + `uv run kitbag ...` works too.
+<details>
+<summary>Installing from source (development)</summary>
+
+```sh
+uv tool install .        # from a clone, or `uv tool install <git-url>`
+uvx --from . kitbag --help
+uv sync && uv run kitbag ...
+```
+
+</details>
 
 ## Data directory
 
@@ -96,7 +111,7 @@ repo you're currently in.
 
 ```sh
 git add -p
-uv run kitbag ai-commit
+kitbag ai-commit
 ```
 
 ### `temp-clone` — throwaway GitHub clones
@@ -105,8 +120,8 @@ Clones a repo into a temp directory, opens it in VS Code, and schedules automati
 via macOS launchd. Requires the `gh` CLI (authenticated) and, for `--open`, the `code` CLI.
 
 ```sh
-uv run kitbag temp-clone https://github.com/org/repo
-uv run kitbag temp-clone https://github.com/org/repo --no-open --cleanup-hours 4
+kitbag temp-clone https://github.com/org/repo
+kitbag temp-clone https://github.com/org/repo --no-open --cleanup-hours 4
 ```
 
 ### `claude-sandbox` — autonomous Claude Code in a locked-down container
@@ -118,22 +133,22 @@ your host and the wider network. Requires Docker running and `ANTHROPIC_API_KEY`
 
 ```sh
 # Interactive session on the repo you're standing in (edits persist for review):
-uv run kitbag claude-sandbox
+kitbag claude-sandbox
 
 # Headless one-shot on a freshly cloned repo (ephemeral — nothing on your host is touched):
-uv run kitbag claude-sandbox https://github.com/org/repo -p "Fix the failing tests"
+kitbag claude-sandbox https://github.com/org/repo -p "Fix the failing tests"
 
 # Headless, but watch a live activity log of tool calls + output as Claude works:
-uv run kitbag claude-sandbox -p "Fix the failing tests" --stream
+kitbag claude-sandbox -p "Fix the failing tests" --stream
 
 # Name the session, and get pinged when a headless run finishes:
-uv run kitbag claude-sandbox -n refactor -p "Split the god object" --notify
+kitbag claude-sandbox -n refactor -p "Split the god object" --notify
 
 # From another terminal, open a shell inside the running "refactor" sandbox:
-uv run kitbag claude-sandbox --attach refactor
+kitbag claude-sandbox --attach refactor
 
 # Allow an extra domain through the egress firewall:
-uv run kitbag claude-sandbox -p "Update deps" --allow-domain deb.debian.org
+kitbag claude-sandbox -p "Update deps" --allow-domain deb.debian.org
 ```
 
 **Input** — pass a repo URL to clone it *inside* the container (ephemeral), or omit it to
