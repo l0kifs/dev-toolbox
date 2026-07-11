@@ -148,6 +148,7 @@ real env var, then a cwd `.env`, then the secure store, then `~/.kitbag/.env`.
 | `ai-commit`      | Generate an AI commit message for staged changes and create the commit   |
 | `temp-clone`     | Clone a GitHub repo into a temp dir, open it in VS Code, auto-clean later |
 | `claude-sandbox` | Run Claude Code with full autonomy inside a network-restricted Docker box |
+| `branch-clean`   | Delete local branches that are merged or whose remote branch is gone     |
 
 ### `ai-commit` — AI commit messages
 
@@ -241,3 +242,25 @@ rebuild). The generated Docker build context lives under `~/.kitbag/claude-sandb
 > allowlisted domain can still be a data path. When you bind-mount the current repo, Claude
 > can freely modify anything in it (that's the point); the sandbox protects your host
 > *outside* the mount and your network, not the mounted files themselves.
+
+### `branch-clean` — prune merged and gone-upstream local branches
+
+Deletes local branches that are already merged into the base branch, or whose remote
+tracking branch is gone (the common case after a squash- or rebase-merged PR is cleaned
+up on GitHub, which `git branch --merged` can't detect on its own). Runs against
+whatever git repo you're currently in; shows a table of candidates and asks for
+confirmation before deleting anything.
+
+```sh
+kitbag branch-clean                 # fetch --prune, then review and confirm deletions
+kitbag branch-clean --dry-run       # show what would be deleted, delete nothing
+kitbag branch-clean --yes           # skip the confirmation prompt
+kitbag branch-clean --protect wip   # never delete a branch named "wip"
+```
+
+Branches merged into the base branch are deleted safely (`git branch -d`). Branches
+whose upstream is gone but aren't provably merged (squash/rebase merges) are deleted
+with `-D` instead, called out separately in the table before you confirm. The base
+branch is detected from the remote's `origin/HEAD`, falling back to a local `main` or
+`master`; override with `--base`. The current branch and detected base branch are
+always protected from deletion.

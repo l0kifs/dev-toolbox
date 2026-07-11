@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `branch-clean` command: delete local branches that are merged into the base branch,
+  or whose remote tracking branch is gone (the common case after a squash- or
+  rebase-merged PR is cleaned up on GitHub). Shows a table of candidates, distinguishing
+  safe (`-d`) from force (`-D`) deletions, and asks for confirmation
+  (`--dry-run`/`--yes`/`--protect` available).
+
 ## [0.3.0] - 2026-07-05
 
 ### Added
